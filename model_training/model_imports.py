@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+import os
 
-df = pd.read_csv("~/Documents/GitHub/LTY-Spectral-Classification/data files/lty_final.csv")
+df = pd.read_csv("~/Documents/GitHub/LTY-Spectral-Classification/data files 2 bands/lty_final.csv")
 
-df_3bands = pd.read_csv("~/Documents/GitHub/LTY-Spectral-Classification/data files/lty_final_highacc.csv")
+df_3bands = pd.read_csv("~/Documents/GitHub/LTY-Spectral-Classification/data files 3 bands/lty_final_highacc.csv")
 
 features = ["JH", "HK", "JK", "W1W2", "KW1", "KW2"]
 y = df["spectral_type_code"]
@@ -21,7 +22,6 @@ X_3bands = df_3bands[features]
 #stratify data so that the training and validation sets have a fair distribution of spectral types
 y_3bands_bins = (y_3bands // 5)
 X_3bands_train, X_3bands_test, y_3bands_train, y_3bands_test = train_test_split(X_3bands, y_3bands, test_size=0.2, random_state=42, stratify = y_3bands_bins)
-
 
 def evaluate_model(model_name: str,
                    model: any,
@@ -63,3 +63,44 @@ def evaluate_model(model_name: str,
     print(f"R^2 on test: {r2:.3f}") 
     print(f"Fraction within ±1 subtype: {within_1:.3f}") 
     print(f"Fraction within ±2 subtypes: {within_2:.3f}")
+
+    save_model_results(
+        model_name=model_name,
+        two_bands=two_bands,
+        rmse = rmse,
+        r2 = r2,
+        within_1 = within_1,
+        within_2 = within_2,
+    )
+
+def save_model_results(
+                    model_name,
+                    two_bands,
+                    rmse, 
+                    r2, 
+                    within_1, 
+                    within_2) -> None:
+    if two_bands:
+        dataset = "2-band"
+    else:
+        dataset = "3-band"
+    #add results to results csv file
+    results = pd.DataFrame([{
+    "model": model_name,
+    "dataset": dataset,
+    "rmse": rmse,
+    "r2": r2,
+    "within_1": within_1,
+    "within_2": within_2
+    }])
+
+    csv_path = os.path.expanduser("~/Documents/GitHub/LTY-Spectral-Classification/model_results.csv")
+
+
+    if os.path.exists(csv_path):
+        results_df = pd.read_csv(csv_path)
+        results_df = pd.concat([results_df,results], ignore_index=True)
+    else:
+        results_df = pd.DataFrame([results])
+
+    results_df.to_csv(csv_path, index=False)
