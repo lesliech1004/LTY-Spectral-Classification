@@ -12,7 +12,20 @@ y = df["spectral_type_code"]
 X = df[features]
 
 #stratify data so that the training and validation sets have a fair distribution of spectral types
-y_bins = (y // 5)
+# Count by major class L/T/Y
+def major_class(code):
+    if 70 <= code < 80:
+        return "L"
+    elif 80 <= code < 90:
+        return "T"
+    elif 90 <= code < 100:
+        return "Y"
+    else:
+        return "?"
+
+df["spectral_type_code"].value_counts().sort_index()
+df["major"] = df["spectral_type_code"].apply(major_class)
+y_bins = df["major"]  # L/T/Y labels
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify = y_bins)
 
 #split our data into training and testing sets
@@ -20,8 +33,11 @@ y_3bands = df_3bands["spectral_type_code"]
 X_3bands = df_3bands[features]
 
 #stratify data so that the training and validation sets have a fair distribution of spectral types
-y_3bands_bins = (y_3bands // 5)
-X_3bands_train, X_3bands_test, y_3bands_train, y_3bands_test = train_test_split(X_3bands, y_3bands, test_size=0.2, random_state=42, stratify = y_3bands_bins)
+df_3bands["spectral_type_code"].value_counts().sort_index()
+df_3bands["major"] = df_3bands["spectral_type_code"].apply(major_class)
+y_major = y_3bands.apply(major_class)  # L/T/Y labels
+
+X_3bands_train, X_3bands_test, y_3bands_train, y_3bands_test = train_test_split(X_3bands, y_3bands, test_size=0.2, random_state=42, stratify = y_major)
 
 def evaluate_model(model_name: str,
                    model: any,
@@ -94,13 +110,13 @@ def save_model_results(
     "within_2": within_2
     }])
 
-    csv_path = os.path.expanduser("~/Documents/GitHub/LTY-Spectral-Classification/model_results.csv")
+    csv_path = os.path.expanduser("~/Documents/GitHub/LTY-Spectral-Classification/data files/model_results.csv")
 
 
     if os.path.exists(csv_path):
         results_df = pd.read_csv(csv_path)
         results_df = pd.concat([results_df,results], ignore_index=True)
     else:
-        results_df = pd.DataFrame([results])
+        results_df = results
 
     results_df.to_csv(csv_path, index=False)
