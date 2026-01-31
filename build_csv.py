@@ -133,8 +133,37 @@ def add_features(wide_df: pd.DataFrame) -> pd.DataFrame:
 final_base = add_features(wide)
 final_highacc = add_features(wide_highacc)
 
-wide.to_csv("lty_photometry_wide.csv", index=False)
+"""wide.to_csv("lty_photometry_wide.csv", index=False)
 wide_highacc.to_csv("lty_photometry_wide_highacc.csv", index=False)
 
 final_base.to_csv("lty_final.csv", index=False)
-final_highacc.to_csv("lty_final_highacc.csv", index=False)
+final_highacc.to_csv("lty_final_highacc.csv", index=False)"""
+
+import matplotlib.pyplot as plt
+
+# Extract main spectral class (L, T, or Y)
+final_base['spectral_class'] = final_base['spectral_type_string'].str[0]
+
+# Count by class
+class_counts = final_base['spectral_class'].value_counts().sort_index()
+
+# Create pie chart
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# Bar chart
+ax1.bar(class_counts.index, class_counts.values, color=['#FF6B6B', '#4ECDC4', '#45B7D1'], 
+        edgecolor='black', alpha=0.7)
+ax1.set_xlabel('Spectral Class', fontsize=12)
+ax1.set_ylabel('Number of Sources', fontsize=12)
+ax1.set_title('Distribution by Spectral Class', fontsize=14, fontweight='bold')
+ax1.grid(axis='y', alpha=0.3)
+
+# Pie chart
+colors = ['#FF6B6B', '#4ECDC4', '#45B7D1']
+ax2.pie(class_counts.values, labels=class_counts.index, autopct='%1.1f%%', 
+        colors=colors, startangle=90, textprops={'fontsize': 12})
+ax2.set_title('Proportion by Spectral Class', fontsize=14, fontweight='bold')
+
+plt.tight_layout()
+plt.savefig('spectral_class_distribution.png', dpi=300, bbox_inches='tight')
+plt.show()
